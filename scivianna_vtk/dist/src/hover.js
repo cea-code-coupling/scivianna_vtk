@@ -6,6 +6,10 @@ import { getArrayValue } from './utils.js';
 
 const HOVER_DARKEN_OFFSET = 20 / 255;
 
+export function computeGroupKey(dataset, cellId, cellValue, resolveCellId) {
+  if (!dataset) return null;
+  return resolveCellId ? `v:${cellValue}` : `c:${cellId}`;
+}
 /**
  * Darken an RGB tuple for hover highlight effect.
  * @param {number[]} tuple - RGB tuple to darken.
@@ -20,19 +24,6 @@ function darkenTuple(tuple) {
       : Math.max(0, Math.min(1, tuple[i] - HOVER_DARKEN_OFFSET));
   }
   return out;
-}
-
-/**
- * Compute a group key for highlighting cells with the same cell_id.
- * @param {vtkPolyData} dataset - The dataset being hovered.
- * @param {number} cellId - The cell ID.
- * @param {*} cellValue - The cell value.
- * @returns {string|null} Group key or null if no dataset.
- */
-export function computeGroupKey(dataset, cellId, cellValue) {
-  if (!dataset) return null;
-  const cellIdArray = dataset.getCellData().getArrayByName('cell_id');
-  return cellIdArray ? `v:${cellValue}` : `c:${cellId}`;
 }
 
 /**
@@ -56,23 +47,22 @@ export function clearHighlight(highlight) {
  * @param {string} groupKey - The group key.
  * @returns {object|null} Highlight state or null if nothing to highlight.
  */
-export function applyHighlight(dataset, cellId, cellValue, groupKey) {
+export function applyHighlight(dataset, cellId, cellValue, groupKey, resolveCellId) {
   if (!dataset || cellId < 0) return null;
   const cd = dataset.getCellData();
   const array = cd.getArrayByName('rgb');
   if (!array || cellId >= array.getNumberOfTuples()) return null;
 
-  const cellIdArray = cd.getArrayByName('cell_id');
   let indices;
-  if (cellIdArray) {
-    // Darken every cell sharing this cell_id value.
+  if (resolveCellId) {
+    // Group every cell whose resolved cell_id matches, regardless of
+    // whether we're on the source, clipped, or cap dataset.
     indices = [];
-    const n = cellIdArray.getNumberOfTuples();
+    const n = array.getNumberOfTuples();
     for (let i = 0; i < n; i++) {
-      if (getArrayValue(cellIdArray, i) === cellValue) indices.push(i);
+      if (resolveCellId(i) === cellValue) indices.push(i);
     }
   } else {
-    // No cell_id grouping available - fall back to single-cell behavior.
     indices = [cellId];
   }
 
@@ -95,7 +85,7 @@ export function applyHighlight(dataset, cellId, cellValue, groupKey) {
  * @param {object} lastHover - Last hover state.
  * @returns {number[]} Updated world coordinates.
  */
-export function updateHover(cellId, cellValue, world, dataset, model, is2DMode, lastHover) {
+export function updateHover(cellId, cellValue, world, dataset, model, is2DMode, lastHover, resolveCellId = null) {
   let x = world?.[0] ?? NaN;
   let y = world?.[1] ?? NaN;
   let z = world?.[2] ?? NaN;
@@ -137,14 +127,13 @@ export function updateHover(cellId, cellValue, world, dataset, model, is2DMode, 
     return [x, y, z];
   }
 
-  const groupKey = computeGroupKey(dataset, cellId, cellValue);
+  const groupKey = computeGroupKey(dataset, cellId, cellValue, resolveCellId);
 
-  // Swap the darken-highlight to the newly hovered cell_id group.
   if (lastHover.highlight && (lastHover.highlight.dataset !== dataset || lastHover.highlight.groupKey !== groupKey)) {
     lastHover.highlight = clearHighlight(lastHover.highlight);
   }
   if (dataset && cellId >= 0 && !lastHover.highlight) {
-    lastHover.highlight = applyHighlight(dataset, cellId, cellValue, groupKey);
+    lastHover.highlight = applyHighlight(dataset, cellId, cellValue, groupKey, resolveCellId);
   }
 
   lastHover.cellId = cellId;

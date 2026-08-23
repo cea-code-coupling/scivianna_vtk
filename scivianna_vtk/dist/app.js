@@ -34,9 +34,9 @@ import vtkMouseCameraTrackballPanManipulator from '@kitware/vtk.js/Interaction/M
 import vtkMouseCameraTrackballZoomManipulator from '@kitware/vtk.js/Interaction/Manipulators/MouseCameraTrackballZoomManipulator';
 
 // Import modular components
-import { toTyped, getArrayValue, makeCellArray, toStrings } from './src/utils.js';
-import { buildFeatureEdges, createEdgeActor, loadEdgesInto } from './src/edges.js';
-import { updateHover, clearHighlight, applyHighlight, computeGroupKey } from './src/hover.js';
+import { toTyped, getArrayValue, makeCellArray, toStrings, getCellIdResolver } from './src/utils.js';
+import { createEdgeActor, loadEdgesInto } from './src/edges.js';
+import { updateHover, clearHighlight } from './src/hover.js';
 
 export function render({ model, el }) {
 
@@ -657,6 +657,15 @@ export function render({ model, el }) {
       cd.addArray(vtkArr);
     });
 
+    // Storing origin cell IDs to keep hover working when clipping string arrays
+    const numCells = polyData.getNumberOfCells();
+    const origIds = vtkDataArray.newInstance({
+      name: 'orig_cell_id',
+      values: Float32Array.from({ length: numCells }, (_, i) => i),
+      numberOfComponents: 1,
+    });
+    polyData.getCellData().addArray(origIds);
+    
     pd.modified();
     cd.modified();
     polyData.modified();
@@ -712,6 +721,15 @@ export function render({ model, el }) {
       }
       cd.addArray(vtkArr);
     });
+
+    // Storing origin cell IDs to keep hover working when clipping string arrays
+    const numCells = polyData.getNumberOfCells();
+    const origIds = vtkDataArray.newInstance({
+      name: 'orig_cell_id',
+      values: Float32Array.from({ length: numCells }, (_, i) => i),
+      numberOfComponents: 1,
+    });
+    polyData.getCellData().addArray(origIds);
 
     pd.modified();
     cd.modified();
@@ -795,14 +813,26 @@ export function render({ model, el }) {
       polyData;
 
     const cellData = dataset.getCellData();
-    const cellIdArray = cellData.getArrayByName('cell_id');
-    const rgbaArray = cellData.getArrayByName('rgba');
-    const cellValueArray = cellData.getArrayByName('cell_value');
+    const origIdArray = cellData.getArrayByName('orig_cell_id');
 
-    const cellId = cellIdArray ? getArrayValue(cellIdArray, pickedCellId) : 'N/A';
-    const cellValue = cellValueArray ? getArrayValue(cellValueArray, pickedCellId) : 'N/A';
+    let cellId, cellValue;
+    if (origIdArray) {
+      // dataset came from the clip filter (or cap) — map back to source polyData
+      const origId = getArrayValue(origIdArray, pickedCellId);
+      const srcCellData = polyData.getCellData();
+      cellId = getArrayValue(srcCellData.getArrayByName('cell_id'), origId);
+      cellValue = getArrayValue(srcCellData.getArrayByName('cell_value'), origId);
+    } else {
+      // dataset is the unclipped polyData itself
+      const cellIdArray = cellData.getArrayByName('cell_id');
+      const cellValueArray = cellData.getArrayByName('cell_value');
+      cellId = cellIdArray ? getArrayValue(cellIdArray, pickedCellId) : 'N/A';
+      cellValue = cellValueArray ? getArrayValue(cellValueArray, pickedCellId) : 'N/A';
+    }
 
-    world = updateHover(pickedCellId, cellId, world, dataset, model, is2DMode, lastHover);
+    const resolveCellId = getCellIdResolver(dataset, polyData);
+    world = updateHover(pickedCellId, cellId, world, dataset, model, is2DMode, lastHover, resolveCellId);
+    
     renderWindow.render();
 
     tooltip.innerHTML = `

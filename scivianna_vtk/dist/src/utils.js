@@ -82,3 +82,25 @@ export function makeCellArray(cell) {
   vtkArr.setData(values);
   return vtkArr;
 }
+// Resolve the *real* cell_id value for a local cell index in `dataset`,
+// working around vtkClipPolyData's inability to carry string arrays.
+export function getCellIdResolver(dataset, sourcePolyData) {
+  if (!dataset) return null;
+  const cd = dataset.getCellData();
+  const origIdArray = cd.getArrayByName('orig_cell_id');
+
+  if (origIdArray) {
+    // dataset is clip/cap output - map each local cell back to the
+    // source polyData's cell to read the (valid) string cell_id there.
+    const srcCellIdArray = sourcePolyData.getCellData().getArrayByName('cell_id');
+    if (!srcCellIdArray) return null;
+    return (i) => {
+      const origId = getArrayValue(origIdArray, i);
+      return getArrayValue(srcCellIdArray, origId);
+    };
+  }
+
+  // dataset is the unclipped source polyData - cell_id is valid as-is.
+  const cellIdArray = cd.getArrayByName('cell_id');
+  return cellIdArray ? (i) => getArrayValue(cellIdArray, i) : null;
+}
