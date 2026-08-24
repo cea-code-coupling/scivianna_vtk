@@ -1,6 +1,6 @@
 /**
  * Main VTK Plotter component for Panel.
- * 
+ *
  * This module orchestrates the VTK.js rendering pipeline, integrating
  * geometry loading, clip plane controls, feature edges, hover picking,
  * and colorbar visualization.
@@ -562,7 +562,7 @@ export function render({ model, el }) {
     camera.setParallelScale(maxXYSize / 2);
     camera.setFocalPoint(center[0], center[1], center[2]);
     camera.setPosition(center[0], center[1], center[2] + maxXYSize * 2);
-    camera.setViewUp(0, -1, 0);
+    camera.setViewUp(0, 1, 0);
     camera.setDistance(maxXYSize * 2);
 
     renderer.resetCameraClippingRange();
@@ -665,7 +665,7 @@ export function render({ model, el }) {
       numberOfComponents: 1,
     });
     polyData.getCellData().addArray(origIds);
-    
+
     pd.modified();
     cd.modified();
     polyData.modified();
@@ -774,7 +774,7 @@ export function render({ model, el }) {
   // =============================================================================
 
   let hoverEnabled = !!model.info;
-  let lastHover = { cellId: -2, cellValue: null, position: [NaN, NaN, NaN], dataset: null, highlight: null };
+  let lastHover = { cellId: null, cellValue: null, position: [NaN, NaN, NaN], dataset: null, highlight: null };
 
   // =============================================================================
   // Mouse interaction
@@ -798,7 +798,7 @@ export function render({ model, el }) {
 
     if (pickedCellId < 0) {
       tooltip.style.display = 'none';
-      updateHover(-1, -1, null, null, model, is2DMode, lastHover);
+      updateHover(null, null, null, null, model, is2DMode, lastHover);
       if (lastHover.highlight) {
         lastHover.highlight = clearHighlight(lastHover.highlight);
       }
@@ -831,8 +831,8 @@ export function render({ model, el }) {
     }
 
     const resolveCellId = getCellIdResolver(dataset, polyData);
-    world = updateHover(pickedCellId, cellId, world, dataset, model, is2DMode, lastHover, resolveCellId);
-    
+    world = updateHover(cellId, cellValue, world, dataset, model, is2DMode, lastHover, resolveCellId);
+
     renderWindow.render();
 
     tooltip.innerHTML = `
@@ -848,7 +848,7 @@ export function render({ model, el }) {
 
   function onMouseLeave() {
     tooltip.style.display = 'none';
-    updateHover(-1, -1, null, null, model, is2DMode, lastHover);
+    updateHover(null, null, null, null, model, is2DMode, lastHover);
     if (lastHover.highlight) {
       lastHover.highlight = clearHighlight(lastHover.highlight);
     }
@@ -862,7 +862,7 @@ export function render({ model, el }) {
       if (lastHover.highlight) {
         lastHover.highlight = clearHighlight(lastHover.highlight);
       }
-      lastHover = { cellId: -2, cellValue: null, position: [NaN, NaN, NaN], dataset: null, highlight: null };
+      lastHover = { cellId: null, cellValue: null, position: [NaN, NaN, NaN], dataset: null, highlight: null };
       renderWindow.render();
     }
   }
