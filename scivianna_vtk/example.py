@@ -180,82 +180,82 @@ class ExamplePanel(param.Parameterized):
         super().__init__(**params)
 
         self.theta_slider = pmui.IntSlider(
-            label="Resolution Theta",
+            label = "Resolution Theta",
             start=4,
             end=80,
-            sizing_mode="stretch_width",
-            value=15,
+            value = 15,
+            width = 270
         )
         self.phi_slider = pmui.IntSlider(
-            label="Resolution Phi",
+            label = "Resolution Phi",
             start=4,
             end=80,
-            sizing_mode="stretch_width",
-            value=14,
+            value = 14,
+            width = 270
         )
         self.cmap_select = pmui.Select(
-            label="Colormap",
-            options=["viridis", "plasma", "inferno", "magma"],
-            sizing_mode="stretch_width",
+            label = "Colormap",
+            options = ["viridis", "plasma", "inferno", "magma"],
+            width = 270
         )
         self.geom_select = pmui.Select(
-            label="Geometry Type",
-            options=["sliced_sphere", "structured_grid", "unstructured_grid", "string_data_sphere"],
-            sizing_mode="stretch_width",
+            label = "Geometry Type",
+            options = ["sliced_sphere", "structured_grid", "unstructured_grid", "string_data_sphere"],
+            width = 270
         )
         self.display_info = pmui.Checkbox(
-            label="Display Info",
-            value=True,
-            sizing_mode="stretch_width",
+            label = "Display Info",
+            value = True,
+            width = 270
         )
 
         self.plane_enabled = pmui.Checkbox(
-            label="Enable Plane (V to toggle)",
-            value=False,
-            sizing_mode="stretch_width",
+            label = "Enable Plane (V to toggle)",
+            value = False,
+            width = 270
         )
         self.clip_enabled = pmui.Checkbox(
-            label="Enable Clip Plane (C to toggle)",
-            value=False,
-            sizing_mode="stretch_width",
+            label = "Enable Clip Plane (C to toggle)",
+            value = False,
+            width = 270
         )
         self.clip_axis_select = pmui.Select(
-            label="Clip Axis (X/Y/Z keys)",
-            options=["x", "y", "z"],
-            value="z",
-            sizing_mode="stretch_width",
+            label = "Clip Axis (X/Y/Z keys)",
+            options = ["x", "y", "z"],
+            value = "z",
+            width = 270
         )
         self.edges_visible = pmui.Checkbox(
-            label="Show Edges",
-            value=True,
-            sizing_mode="stretch_width",
+            label = "Show Edges",
+            value = True,
+            width = 270
         )
         self.view_2d_mode = pmui.Checkbox(
-            label="2D Top View (XY plane)",
-            value=False,
-            sizing_mode="stretch_width",
+            label = "2D Top View (XY plane)",
+            value = False,
+            width = 270
         )
 
         self.colorbar_visible = pmui.Checkbox(
-            label="Show Colorbar",
-            value=False,
-            sizing_mode="stretch_width",
+            label = "Show Colorbar",
+            value = False,
+            width = 270
         )
         self.colorbar_scale = pmui.Select(
-            label="Colorbar Scale",
-            options=["linear", "log"],
-            value="linear",
-            sizing_mode="stretch_width",
+            label = "Colorbar Scale",
+            options = ["linear", "log"],
+            value = "linear",
+            width = 270
         )
         self.colorbar_min = pmui.FloatInput(
-            label="Colorbar Min",
-            value=0.0,
-            sizing_mode="stretch_width",
+            label = "Colorbar Min",
+            value = 0.0,
+            width = 270
         )
         self.colorbar_max = pmui.FloatInput(
-            label="Colorbar Max",
-            value=1.0,
-            sizing_mode="stretch_width",
+            label = "Colorbar Max",
+            value = 1.0,
+            width = 270
         )
 
         self.theta_slider.param.watch(self._update_vtp_data, "value")
@@ -274,9 +274,9 @@ class ExamplePanel(param.Parameterized):
         self.view_2d_mode.param.watch(self._update_view_2d_mode, "value")
 
         self.poly = create_sliced_sphere(
-            theta_count=self.theta_slider.value,
-            phi_count=self.phi_slider.value,
-            cmap=self.cmap_select.value,
+            theta_count = self.theta_slider.value,
+            phi_count = self.phi_slider.value,
+            cmap = self.cmap_select.value,
         )
 
         self.description = pmui.Typography("Hover to update...")
@@ -303,6 +303,7 @@ class ExamplePanel(param.Parameterized):
     def update_description(self, event=None):
         self.description.object = f"""
         Hovered Cell ID: {self.vtk_view.hover_cell_id}
+
         Hovered Cell Value: {self.vtk_view.hover_cell_value}
 
         Hovered Coordinates:
@@ -347,6 +348,7 @@ class ExamplePanel(param.Parameterized):
                 self.display_info,
                 self.description,
                 width=300,
+                scroll=True
             ),
             self.vtk_view,
             sizing_mode="stretch_both",

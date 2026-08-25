@@ -6,9 +6,9 @@ import { getArrayValue } from './utils.js';
 
 const HOVER_DARKEN_OFFSET = 20 / 255;
 
-export function computeGroupKey(dataset, cellId, cellValue, resolveCellId) {
+export function computeGroupKey(dataset, pickedCellId, cellId, resolveCellId) {
   if (!dataset) return null;
-  return resolveCellId ? `v:${cellValue}` : `c:${cellId}`;
+  return resolveCellId ? `v:${resolveCellId(pickedCellId)}` : `c:${cellId}`;
 }
 /**
  * Darken an RGB tuple for hover highlight effect.
@@ -47,11 +47,11 @@ export function clearHighlight(highlight) {
  * @param {string} groupKey - The group key.
  * @returns {object|null} Highlight state or null if nothing to highlight.
  */
-export function applyHighlight(dataset, cellId, cellValue, groupKey, resolveCellId) {
-  if (!dataset || cellId < 0) return null;
+export function applyHighlight(dataset, pickedCellId, cellId, cellValue, groupKey, resolveCellId) {
+  if (!dataset || pickedCellId == null) return null;
   const cd = dataset.getCellData();
   const array = cd.getArrayByName('rgb');
-  if (!array || cellId >= array.getNumberOfTuples()) return null;
+  if (!array || pickedCellId >= array.getNumberOfTuples()) return null;
 
   let indices;
   if (resolveCellId) {
@@ -60,7 +60,7 @@ export function applyHighlight(dataset, cellId, cellValue, groupKey, resolveCell
     indices = [];
     const n = array.getNumberOfTuples();
     for (let i = 0; i < n; i++) {
-      if (resolveCellId(i) === cellValue) indices.push(i);
+      if (resolveCellId(i) === cellId) indices.push(i);
     }
   } else {
     indices = [cellId];
@@ -85,7 +85,7 @@ export function applyHighlight(dataset, cellId, cellValue, groupKey, resolveCell
  * @param {object} lastHover - Last hover state.
  * @returns {number[]} Updated world coordinates.
  */
-export function updateHover(cellId, cellValue, world, dataset, model, is2DMode, lastHover, resolveCellId = null) {
+export function updateHover(pickedCellId, cellId, cellValue, world, dataset, model, is2DMode, lastHover, resolveCellId = null) {
   let x = world?.[0] ?? NaN;
   let y = world?.[1] ?? NaN;
   let z = world?.[2] ?? NaN;
@@ -127,13 +127,13 @@ export function updateHover(cellId, cellValue, world, dataset, model, is2DMode, 
     return [x, y, z];
   }
 
-  const groupKey = computeGroupKey(dataset, cellId, cellValue, resolveCellId);
+  const groupKey = computeGroupKey(dataset, pickedCellId, cellId, resolveCellId);
 
   if (lastHover.highlight && (lastHover.highlight.dataset !== dataset || lastHover.highlight.groupKey !== groupKey)) {
     lastHover.highlight = clearHighlight(lastHover.highlight);
   }
-  if (dataset && cellId >= 0 && !lastHover.highlight) {
-    lastHover.highlight = applyHighlight(dataset, cellId, cellValue, groupKey, resolveCellId);
+  if (dataset && cellId != null && !lastHover.highlight) {
+    lastHover.highlight = applyHighlight(dataset, pickedCellId, cellId, cellValue, groupKey, resolveCellId);
   }
 
   lastHover.cellId = cellId;

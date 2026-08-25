@@ -798,7 +798,7 @@ export function render({ model, el }) {
 
     if (pickedCellId < 0) {
       tooltip.style.display = 'none';
-      updateHover(null, null, null, null, model, is2DMode, lastHover);
+      updateHover(null, null, null, null, null, model, is2DMode, lastHover);
       if (lastHover.highlight) {
         lastHover.highlight = clearHighlight(lastHover.highlight);
       }
@@ -831,7 +831,7 @@ export function render({ model, el }) {
     }
 
     const resolveCellId = getCellIdResolver(dataset, polyData);
-    world = updateHover(cellId, cellValue, world, dataset, model, is2DMode, lastHover, resolveCellId);
+    world = updateHover(pickedCellId, cellId, cellValue, world, dataset, model, is2DMode, lastHover, resolveCellId);
 
     renderWindow.render();
 
@@ -848,7 +848,7 @@ export function render({ model, el }) {
 
   function onMouseLeave() {
     tooltip.style.display = 'none';
-    updateHover(null, null, null, null, model, is2DMode, lastHover);
+    updateHover(null, null, null, null, null, model, is2DMode, lastHover);
     if (lastHover.highlight) {
       lastHover.highlight = clearHighlight(lastHover.highlight);
     }
