@@ -417,8 +417,8 @@ class VTKPlotter(JSComponent):
 
     info = param.Boolean(default=True, doc="Whether to show the info panel.")
 
-    hover_cell_id = param.Parameter(default=-1, doc="ID of the currently hovered cell.")
-    hover_cell_value = param.Parameter(default=-1, doc="Value of the currently hovered cell.")
+    hover_cell_id = param.Parameter(default=None, doc="ID of the currently hovered cell.")
+    hover_cell_value = param.Parameter(default=None, doc="Value of the currently hovered cell.")
 
     hover_position = param.List(
         default=[float("nan"), float("nan"), float("nan")],

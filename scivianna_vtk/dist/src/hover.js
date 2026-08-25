@@ -33,6 +33,9 @@ function darkenTuple(tuple) {
 export function clearHighlight(highlight) {
   if (!highlight) return;
   const { array, dataset, indices, originals } = highlight;
+  if (typeof array?.setTuple !== 'function' || typeof dataset?.modified !== 'function') {
+    return null;
+  }
   indices.forEach((i, idx) => array.setTuple(i, originals[idx]));
   array.modified();
   dataset.modified();
@@ -68,6 +71,9 @@ export function applyHighlight(dataset, pickedCellId, cellId, cellValue, groupKe
 
   const originals = indices.map((i) => Array.from(array.getTuple(i)));
   const highlight = { array, dataset, groupKey, indices, originals };
+  if (typeof array?.setTuple !== 'function' || typeof dataset?.modified !== 'function') {
+    return highlight;
+  }
   indices.forEach((i, idx) => array.setTuple(i, darkenTuple(originals[idx])));
   array.modified();
   dataset.modified();
