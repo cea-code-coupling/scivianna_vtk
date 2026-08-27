@@ -949,9 +949,12 @@ class VTKPlotter(JSComponent):
 
         d = self._convert_mesh(polydata)
 
-        self.geometry = {
-            **self.geometry,
-            "pointData": d["pointData"],
-            "cellData": d["cellData"],
-        }
+        if self.geometry is None:
+            self.geometry = d
+        else:
+            self.geometry = {
+                **self.geometry,
+                "pointData": d["pointData"],
+                "cellData": d["cellData"],
+            }
         self._recompute_clip_slice()
