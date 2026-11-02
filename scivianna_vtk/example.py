@@ -1,17 +1,9 @@
 """
 Main example launcher for scivianna_vtk.
 
-This module provides a unified interface to run different geometry examples.
-For individual examples, see the `examples` subpackage.
-
-Usage
------
-To run the full example with all geometry types:
-    python -m scivianna_vtk.example
-
-To run individual examples:
-    python -m scivianna_vtk.examples.example_sliced_sphere
-    python -m scivianna_vtk.examples.example_string_data
+Provides the ExamplePanel interactive UI and helper functions that build
+the demo geometries (sliced sphere, structured grid, tetrahedral mesh,
+string-data sphere) used to exercise the VTKPlotter component.
 """
 
 import param
@@ -177,6 +169,7 @@ class ExamplePanel(param.Parameterized):
     """
 
     def __init__(self, **params):
+        """Build the control widgets, wire up their watchers and show the initial mesh."""
         super().__init__(**params)
 
         self.theta_slider = pmui.IntSlider(
@@ -298,9 +291,11 @@ class ExamplePanel(param.Parameterized):
         self._update_clip_controls_visibility()
 
     def _init_clip_plane(self):
+        """Position the clip plane at the center of the current mesh."""
         self._update_clip_position()
 
     def update_description(self, event=None):
+        """Refresh the hover info display with the current hovered cell data."""
         self.description.object = f"""
         Hovered Cell ID: {self.vtk_view.hover_cell_id}
 
@@ -314,6 +309,7 @@ class ExamplePanel(param.Parameterized):
         """
 
     def update_description_clip(self, event=None):
+        """Refresh the clip plane info display with origin and normal."""
         self.description_clip.object = f"""
         Clip origin: {self.vtk_view.hover_cell_id}
 
@@ -329,6 +325,7 @@ class ExamplePanel(param.Parameterized):
         """
 
     def show(self):
+        """Display the control column and the 3D view side by side."""
         pmui.Row(
             pmui.Column(
                 self.geom_select,
@@ -355,6 +352,7 @@ class ExamplePanel(param.Parameterized):
         ).show()
 
     def _update_vtp_data(self, event=None):
+        """Rebuild the mesh from the current widget values and push it to the plotter."""
         print("Updating VTKPlotter data...")
         if self.geom_select.value == "structured_grid":
             mesh = create_uniform_structured_grid(
@@ -387,6 +385,7 @@ class ExamplePanel(param.Parameterized):
         self._update_colorbar_from_data()
 
     def _update_colorbar_from_data(self):
+        """Sync the colorbar range, colors and visibility with the current mesh data."""
         if hasattr(self, 'poly') and self.poly is not None:
             if "cell_value" in self.poly.cell_data:
                 cell_value = self.poly["cell_value"]
@@ -407,39 +406,49 @@ class ExamplePanel(param.Parameterized):
             self.vtk_view.colorbar_colors = normalized_colors[:, :3].tolist()
 
     def _update_color(self, event=None):
+        """Recolor the current mesh with the selected colormap and refresh the plotter."""
         set_color(self.poly, cmap=self.cmap_select.value)
         self.vtk_view.update_colors(self.poly)
         self._update_colorbar_from_data()
 
     def _update_info_display(self, event=None):
+        """Forward the info-panel visibility checkbox to the plotter."""
         self.vtk_view.info = self.display_info.value
 
     def _update_clip_enabled(self, event=None):
+        """Forward the clip-plane enable checkbox to the plotter."""
         self.vtk_view.set_clip_enabled(self.clip_enabled.value)
 
     def _update_plane_enabled(self, event=None):
+        """Forward the plane-visualization checkbox to the plotter."""
         self.vtk_view.set_plane_enabled(self.plane_enabled.value)
 
     def _update_clip_axis(self, event=None):
+        """Point the clip plane normal at the selected axis and re-center it."""
         self.vtk_view.set_clip_axis(self.clip_axis_select.value)
         self._update_clip_position()
 
     def _update_edges_visible(self, event=None):
+        """Forward the edges-visibility checkbox to the plotter."""
         self.vtk_view.edges_visible = self.edges_visible.value
 
     def _update_colorbar_visible(self, event=None):
+        """Forward the colorbar visibility checkbox to the plotter."""
         self.vtk_view.colorbar_visible = self.colorbar_visible.value
 
     def _update_colorbar_scale(self, event=None):
+        """Forward the colorbar scale selector to the plotter."""
         self.vtk_view.colorbar_scale = self.colorbar_scale.value
 
     def _update_colorbar_range(self, event=None):
+        """Forward the colorbar min/max inputs to the plotter."""
         self.vtk_view.set_colorbar_range(
             vmin=self.colorbar_min.value,
             vmax=self.colorbar_max.value
         )
 
     def _update_clip_controls_visibility(self):
+        """Hide the clip/plane controls while 2D top-view mode is active."""
         is_2d = self.view_2d_mode.value
         self.plane_enabled.visible = not is_2d
         self.clip_enabled.visible = not is_2d
@@ -447,10 +456,12 @@ class ExamplePanel(param.Parameterized):
         self.description_clip.visible = not is_2d
 
     def _update_view_2d_mode(self, event=None):
+        """Toggle the 2D top-down view mode on the plotter."""
         self.vtk_view.set_view_2d_mode(self.view_2d_mode.value)
         self._update_clip_controls_visibility()
 
     def _update_clip_position(self, event=None):
+        """Move the clip plane to the middle of the mesh extent along its axis."""
         if hasattr(self, 'poly') and self.poly is not None:
             bounds = self.poly.bounds
             axis_idx = {'x': 0, 'y': 1, 'z': 2}.get(self.clip_axis_select.value, 2)

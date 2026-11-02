@@ -13,17 +13,6 @@ Features
 - Plane overlay display
 - Colormap-based cell coloring
 
-Examples
---------
->>> from scivianna_vtk import VTKPlotter
->>> import pyvista as pv
->>> sphere = pv.Sphere()
->>> plotter = VTKPlotter()
->>> plotter.update_polydata(sphere)
-
->>> from scivianna_vtk import polydata_to_dict
->>> data = polydata_to_dict(sphere)
-
 Modules
 -------
 plotter : VTK plotting and mesh conversion utilities

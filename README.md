@@ -11,8 +11,6 @@ pip install scivianna-vtk
 ## Usage
 
 ```python
-import param
-import numpy as np
 import panel_material_ui as pmui
 from scivianna_vtk import VTKPlotter, polydata_to_dict
 import pyvista as pv
@@ -20,15 +18,21 @@ import pyvista as pv
 # Create a simple sphere
 sphere = pv.Sphere(theta_resolution=30, phi_resolution=30)
 
-# Convert to vtk.js format
-vtk_data = polydata_to_dict(sphere)
-
-# Create plotter
+# Create plotter and feed it the mesh
 plotter = VTKPlotter()
 plotter.update_polydata(sphere)
 
 # Show with Panel
 plotter.show()
+```
+
+For a full interactive demo (geometry switcher, colormap, clip plane, colorbar),
+run the bundled example:
+
+```python
+from scivianna_vtk.example import ExamplePanel
+
+ExamplePanel().show()
 ```
 
 ## Features

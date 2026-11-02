@@ -1,3 +1,9 @@
+"""VTK plotting and mesh conversion utilities for scivianna_vtk.
+
+Provides the VTKPlotter Panel JSComponent (vtk.js-based interactive 3D
+visualization) plus helpers that convert pyvista meshes to
+vtk.js-compatible binary dictionaries.
+"""
 import param
 import panel as pn
 from panel.custom import JSComponent
@@ -65,6 +71,12 @@ def _is_string_array(vtk_array) -> bool:
     return vtk_array.GetDataType() == VTK_STRING
 
 def _serialize_string_array(arr) -> dict:
+    """Serialize a VTK string array into a vtk.js-compatible dictionary.
+
+    Encodes each value as UTF-8, pads all entries to the same byte width,
+    and returns them as a single buffer with metadata (numTuples,
+    stringLength, components).
+    """
     values = [
         arr.GetValue(i)
         for i in range(arr.GetNumberOfValues())
@@ -98,6 +110,12 @@ def _serialize_string_array(arr) -> dict:
     }
 
 def _serialize_array(arr) -> dict:
+    """Serialize a VTK array into a vtk.js-compatible dictionary.
+
+    Dispatches to the string serializer for VTK_STRING arrays, otherwise
+    converts the array to numpy and packs it as float32 bytes with
+    component count and dtype metadata.
+    """
     if _is_string_array(arr):
         return _serialize_string_array(arr)
 
@@ -200,6 +218,7 @@ def polydata_to_dict(poly: pv.PolyData) -> dict:
     # -------------------------------------------------------------------------
 
     def cell(cell):
+        """Extract one cell array (polys, lines, ...) into its binary stream."""
         return extract_cell_stream(cell)
 
     polys = cell(poly.GetPolys())
@@ -545,12 +564,6 @@ class VTKPlotter(JSComponent):
             Plane origin [x, y, z]. If None, keeps current origin.
         normal : list of 3 floats, optional
             Plane normal [x, y, z]. If None, keeps current normal.
-
-        Examples
-        --------
-        >>> plotter.set_clip_plane(origin=[0.5, 0.5, 0.5])
-        >>> plotter.set_clip_plane(normal=[1, 0, 0])
-        >>> plotter.set_clip_plane(origin=[0, 0, 0], normal=[0, 0, 1])
         """
         if origin is not None:
             if not np.isclose(
@@ -604,11 +617,6 @@ class VTKPlotter(JSComponent):
             Axis for the normal direction.
         sign : {1, -1}, optional
             Direction sign. Default is 1 (positive direction).
-
-        Examples
-        --------
-        >>> plotter.set_clip_axis('x')      # Normal: [1, 0, 0]
-        >>> plotter.set_clip_axis('z', -1)  # Normal: [0, 0, -1]
         """
         normals = {
             'x': [sign, 0, 0],
@@ -718,13 +726,6 @@ class VTKPlotter(JSComponent):
         ----------
         colors : list of [float, float, float]
             List of RGB triples, each channel in [0, 1].
-
-        Examples
-        --------
-        >>> # blue -> white -> red diverging colormap
-        >>> plotter.set_colorbar_colors([[0, 0, 1], [1, 1, 1], [1, 0, 0]])
-        >>> # simple grayscale ramp
-        >>> plotter.set_colorbar_colors([[0, 0, 0], [1, 1, 1]])
         """
         colors = [list(c) for c in colors]
         if len(colors) < 2:
@@ -747,11 +748,6 @@ class VTKPlotter(JSComponent):
         ----------
         enabled : bool
             Whether to enable 2D mode.
-
-        Examples
-        --------
-        >>> plotter.set_view_2d_mode(True)   # Enable 2D mode
-        >>> plotter.set_view_2d_mode(False)  # Return to 3D mode
         """
         if self.view_2d_mode != enabled:
             self.view_2d_mode = enabled
